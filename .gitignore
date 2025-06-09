@@ -1,0 +1,10 @@
+.vscode/
+SQL Scripts/
+AMUA Search.docx
+package-lock.json
+~$UA Search.docx
+
+backend/.gitattribute
+backend/src/main/resources/application.properties
+
+frontend/package-lock.json

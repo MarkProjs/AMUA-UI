@@ -1,0 +1,125 @@
+package com.example.backend.controller;
+
+import java.util.List;
+import java.util.Map;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.example.backend.service.UserService;
+
+
+
+
+
+@RestController
+@RequestMapping("api/users")
+public class UserController {
+    
+    private final UserService userService;
+
+    public UserController(UserService userSearchService) {
+        this.userService = userSearchService;
+    }
+
+    @GetMapping("/companies")
+    public List<Map<String, Object>> getCompanies() {
+        return userService.getCompanies();
+    }
+
+    @GetMapping("/bu/all")
+    public List<Map<String, Object>> getAllBUs() {
+        return userService.getAllBUs("FUTA");
+    }
+
+    @GetMapping("/bu/class")
+    public List<Map<String, Object>> getBUsForClass(@RequestParam String company,
+                                            @RequestParam String clazz) {
+        return userService.getBUsForClass(company, clazz);
+    }
+
+    @GetMapping("/classes")
+    public List<Map<String, Object>> getClassesForCompany(@RequestParam String company) {
+        return userService.getClassesForBU(company);
+    }
+
+    @GetMapping("/search/param")
+    public List<Map<String, Object>> searchDirector(@RequestParam String company,
+                                            @RequestParam String clazz,
+                                            @RequestParam String businessUnit) {
+        return userService.getDirectorBasedOnParam(company, businessUnit, clazz);
+    }
+
+    @GetMapping("/search/all")
+    public List<Map<String, Object>> searchAll() {
+        return userService.getAllDirectors();
+    }
+    
+    @GetMapping("/search/company")
+    public List<Map<String, Object>> searchByCompany(@RequestParam String company) {
+        return userService.getListForCompanyOnly(company);
+    }
+
+    @GetMapping("/nt-accounts")
+    public List<String> getNTAccountsByCompany(@RequestParam String company) {
+        return userService.getNTAccountsByCompany(company);
+    }
+
+    @PutMapping("/update-nt")
+    public Map<String, Object> updateNTAccount(@RequestBody Map<String, String> payload) {
+        String company = payload.get("company");
+        String businessUnit = payload.get("businessUnit");
+        String clazz = payload.get("clazz");
+        String newNTAccount = payload.get("ntAccount");
+
+        int rowsAffected = userService.updateNTAccount(company, businessUnit, clazz, newNTAccount);
+        return Map.of("rowsUpdated", rowsAffected);
+    }
+
+    // @PostMapping("/add-class/all")
+    // public Map<String, Object> addClassForAll(@RequestBody Map<String, String> payload) {
+    //     String businessUnit = payload.get("businessUnit");
+    //     String clazz = payload.get("clazz");
+    //     int insertedCount = userService.addClassForAll(businessUnit, clazz);
+    //     return Map.of("rowsInserted", insertedCount);
+    // }
+
+    @PostMapping("add-class/single")
+    public ResponseEntity<Map<String, Object>> addSingleClass(@RequestBody Map<String, String> payload) {
+        String company = payload.get("company");
+        String businessUnit = payload.get("businessUnit");
+        String clazz = payload.get("clazz");
+        String ntAccount = payload.get("ntAccount");
+
+        int result = userService.insertClassWithDirector(company, businessUnit, clazz, ntAccount);
+
+        if (result == 0) {
+        return ResponseEntity
+            .status(HttpStatus.CONFLICT)
+            .body(Map.of("message", "Class already exists in different Business Unit."));
+        }
+        return ResponseEntity.ok(Map.of("rowsInserted", result));
+    }
+
+    @DeleteMapping("/delete/bu")
+    public Map<String, Object> deleteClassForCompany(@RequestParam String clazz, 
+                                                @RequestParam String company) {
+        int deletedCount = userService.deleteClassForCompany(clazz, company);
+        return Map.of("rowsDeleted", deletedCount);
+    }
+    
+    @DeleteMapping("/delete/row")
+    public Map<String, Object> deleteRowFromTable(@RequestParam String clazz,
+                                            @RequestParam String company) {
+        int deletedRow = userService.deleteRow(clazz, company);
+        return Map.of("rowsDeleted", deletedRow);
+    }
+}

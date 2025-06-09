@@ -1,0 +1,32 @@
+.table-wrapper {
+    height: 504px; 
+    overflow-y: auto;
+    overflow-x: auto; 
+    border: 1px solid #ddd; 
+}
+
+.custom-table {
+    width: 100%;
+    table-layout: fixed;
+    border-collapse: collapse;
+    background-color: #ffffff;
+    font-size: 14px;
+}
+
+.custom-table th,
+.custom-table td {
+    padding: 0.75rem;
+    text-align: center;
+    vertical-align: middle;
+    border: 1px solid #dee2e6;
+    white-space: nowrap;
+}
+
+.custom-table td .react-select__control {
+    min-width: 250px;
+}
+
+.custom-table thead th {
+    background-color: #343a40;
+    color: #fff;
+}

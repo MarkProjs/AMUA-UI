@@ -1,0 +1,81 @@
+.page-wrapper {
+    font-family: Arial, sans-serif;
+    background-color: #f8f9fa;
+    padding: 0;
+}
+
+.header-bar {
+    background-color: #003300;
+    color: white;
+    padding: 10px 20px;
+    font-size: 18px;
+    font-weight: bold;
+}
+
+.filter-bar {
+    background-color: #d3d3d3;
+    padding: 20px;
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    align-items: flex-end;
+}
+
+.action-bar {
+    margin: 20px;
+}
+
+
+.add-form {
+    min-height: 400px;
+    background-color: #f9f9f9;
+    border: 1px solid #dee2e6;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    overflow: hidden; 
+}
+
+.add-form .form-label {
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+
+.add-form select,
+.add-form input {
+    border-radius: 8px;
+    padding: 10px;
+    border: 1px solid #ccc;
+    font-size: 14px;
+}
+
+.add-form .form-control,
+.add-form .form-select {
+    min-width: 220px;
+}
+
+.add-form .btn {
+    height: 100%;
+    font-weight: 500;
+    font-size: 14px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    margin-right: 20px;
+    margin-bottom: 10px;
+}
+
+.react-select__control {
+    border-radius: 8px;
+    min-height: 40px;
+    font-size: 14px;
+}
+
+.react-select__menu {
+    z-index: 9999;
+}
+
+
