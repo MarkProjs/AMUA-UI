@@ -73,7 +73,7 @@ export async function updateNTAccount(company, clazz, businessUnit, ntAccount) {
 }
 
 export async function getNTAccountsByCompany(company) {
-    const res = await axios.get(`${API_BASE_URL}/nt-accounts`, {
+    const res = await axios.get(`${API_BASE_URL}/ntaccounts`, {
         params: {company}
     });
     return res.data;

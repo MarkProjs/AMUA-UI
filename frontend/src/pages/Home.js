@@ -71,7 +71,7 @@ function Home() {
         async function loadNTAccounts() {
             if (addFormCompany) {
                 const accounts = await getNTAccountsByCompany(addFormCompany);
-                setNtAccounts(accounts);
+                setNtAccounts(accounts.map( a => ({ value: a.value, label: a.label })));
             } else {
                 setNtAccounts([]);
             }
@@ -229,11 +229,11 @@ async function handleAddDirector() {
 
                             <div className="form-group me-4">
                                 <DropDownSelector
-                                    label="New Director NT Account"
+                                    label="New Director Name"
                                     value={selectedNTAccount}
                                     options={ntAccounts}
                                     onChange={(e) => setSelectedNTAccount(e.target.value)}
-                                    placeholder="Select NT Account"
+                                    placeholder="Select Name..."
                                     isSearchable={true}
                                 />
                             </div>

@@ -23,7 +23,7 @@ function SearchTable({ data, onUpdateComplete, addingMode,hasSearched }) {
     async function fetchNTOptions(company) {
         try {
             const list = await getNTAccountsByCompany(company);
-            const options = list.map(acc => ({ value: acc, label: acc }));
+            const options = list.map(acc => ({ value: acc.value, label: acc.label }));
             setNtDropdownOptions(options);
         } catch (error) {
             console.error('Failed to fetch NT Account options:', error);

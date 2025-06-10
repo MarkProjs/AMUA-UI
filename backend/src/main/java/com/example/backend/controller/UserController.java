@@ -78,10 +78,11 @@ public class UserController {
         return userService.getAllClassesForCompany(company);
     }
 
-    @GetMapping("/nt-accounts")
-    public List<String> getNTAccountsByCompany(@RequestParam String company) {
-        return userService.getNTAccountsByCompany(company);
+    @GetMapping("/ntaccounts")
+    public ResponseEntity<List<Map<String, Object>>> getNtAccounts(@RequestParam String company) {
+        return ResponseEntity.ok(userService.getNTAccountsByCompany(company));
     }
+
 
     @PutMapping("/update-nt")
     public Map<String, Object> updateNTAccount(@RequestBody Map<String, String> payload) {

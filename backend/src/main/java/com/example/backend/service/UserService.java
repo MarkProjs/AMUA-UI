@@ -52,8 +52,8 @@ public class UserService {
         return repository.updateNTAccount(company, businessUnit, clazz, newNTAccount);
     }
 
-    public List<String> getNTAccountsByCompany(String company) {
-        return repository.getNTAccountsByCompany(company);
+    public List<Map<String, Object>> getNTAccountsByCompany(String company) {
+        return repository.getDisplayNameAndNTAccounts(company);
     }
 
     public int assignDirector(String company, String businessUnit, String clazz, String ntAccount) {

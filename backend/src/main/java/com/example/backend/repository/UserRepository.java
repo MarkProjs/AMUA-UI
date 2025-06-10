@@ -98,18 +98,24 @@ public class UserRepository {
                 """, newNTAccount, company, clazz, businessUnit);
     }
 
-    public List<String> getNTAccountsByCompany(String company) {
-        String prefix;
-        switch(company) {
-            case "FUTA" -> prefix = "ASIA\\";
-            case "FUTE" -> prefix = "EUR\\";
-            case "FUTI" -> prefix = "NA\\";
-            default -> throw new IllegalArgumentException("Unknown company: " + company);
-        }
+    public List<Map<String, Object>> getDisplayNameAndNTAccounts(String company) {
+        String prefix = switch (company) {
+            case "FUTA" -> "ASIA\\";
+            case "FUTE" -> "EUR\\";
+            case "FUTI" -> "NA\\";
+            default      -> throw new IllegalArgumentException("Unknown company: " + company);
+        };
 
-        String sql = "SELECT DISTINCT NT_Account FROM DATAWHSE..ADSUSERS WHERE NT_Account LIKE ? ORDER BY NT_Account";
-        return jdbcTemplate.queryForList(sql, String.class, prefix + "%");
+        return jdbcTemplate.queryForList("""
+            SELECT  DisplayName AS label,
+                    NT_Account  AS value
+            FROM    DATAWHSE..ADSUSERS
+            WHERE   NT_Account LIKE ?
+            ORDER BY DisplayName
+        """, prefix + "%");
     }
+
+
 
     public int assignDirector(String company, String businessUnit, String clazz, String ntAccount) {
         String prefix;
