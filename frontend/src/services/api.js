@@ -7,16 +7,33 @@ export async function fetchCompanies() {
     return res.data;
 }
 
-export async function fetchAllBUs() {
-    const res = await axios.get(`${API_BASE_URL}/bu/all`);
-    return res.data;
-}
 
 export async function fetchClasses(company) {
     const res = await axios.get(`${API_BASE_URL}/classes`, {
         params: {company},
     });
     return res.data;
+}
+
+export async function fetchAllClasses(company) {
+    const res = await axios.get(`${API_BASE_URL}/classes/all`, {
+        params: {company},
+    });
+    return res.data;
+}
+
+export async function fetchBusinessUnitForClass(company, clazz) {
+    try {
+        const res = await axios.get(`${API_BASE_URL}/bu/for-class`, {
+            params: {company, clazz},
+        });
+        return res.data.businessUnit;
+    } catch (error) {
+        if (error.response && error.response.status === 404) {
+            return null;
+        }
+        throw error;
+    }
 }
 
 export async function fetchBusinessUnit(company, clazz) {
@@ -62,18 +79,10 @@ export async function getNTAccountsByCompany(company) {
     return res.data;
 }
 
-// export async function addClassToAll(clazz, businessUnit) {
-//     const res = await axios.post(`${API_BASE_URL}/add-class/all`, {
-//         businessUnit,
-//         clazz
-//     });
 
-//     return res.data;
-// }
-
-export async function addClassForCompany(company, clazz, businessUnit, ntAccount) {
+export async function addDirector(company, clazz, businessUnit, ntAccount) {
     try {
-        const res = await axios.post(`${API_BASE_URL}/add-class/single`, {
+        const res = await axios.post(`${API_BASE_URL}/add-director`, {
             company,
             clazz,
             businessUnit,

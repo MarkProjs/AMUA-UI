@@ -35,15 +35,20 @@ public class UserController {
         return userService.getCompanies();
     }
 
-    @GetMapping("/bu/all")
-    public List<Map<String, Object>> getAllBUs() {
-        return userService.getAllBUs("FUTA");
-    }
-
     @GetMapping("/bu/class")
     public List<Map<String, Object>> getBUsForClass(@RequestParam String company,
                                             @RequestParam String clazz) {
         return userService.getBUsForClass(company, clazz);
+    }
+
+    @GetMapping("/bu/for-class")
+    public ResponseEntity<Map<String, String>> getBusinessUnitForClass(@RequestParam String company, 
+                                                                   @RequestParam String clazz) {
+        String businessUnit = userService.getBusinessUnitForClass(company, clazz);
+        if (businessUnit == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(Map.of("businessUnit", businessUnit));
     }
 
     @GetMapping("/classes")
@@ -68,6 +73,11 @@ public class UserController {
         return userService.getListForCompanyOnly(company);
     }
 
+    @GetMapping("/classes/all")
+    public List<Map<String, Object>> getAllClassesForCompany(@RequestParam String company) {
+        return userService.getAllClassesForCompany(company);
+    }
+
     @GetMapping("/nt-accounts")
     public List<String> getNTAccountsByCompany(@RequestParam String company) {
         return userService.getNTAccountsByCompany(company);
@@ -84,24 +94,17 @@ public class UserController {
         return Map.of("rowsUpdated", rowsAffected);
     }
 
-    // @PostMapping("/add-class/all")
-    // public Map<String, Object> addClassForAll(@RequestBody Map<String, String> payload) {
-    //     String businessUnit = payload.get("businessUnit");
-    //     String clazz = payload.get("clazz");
-    //     int insertedCount = userService.addClassForAll(businessUnit, clazz);
-    //     return Map.of("rowsInserted", insertedCount);
-    // }
 
-    @PostMapping("add-class/single")
-    public ResponseEntity<Map<String, Object>> addSingleClass(@RequestBody Map<String, String> payload) {
+    @PostMapping("/add-director")
+    public ResponseEntity<Map<String, Object>> addDirector(@RequestBody Map<String, String> payload) {
         String company = payload.get("company");
         String businessUnit = payload.get("businessUnit");
         String clazz = payload.get("clazz");
         String ntAccount = payload.get("ntAccount");
 
-        int result = userService.insertClassWithDirector(company, businessUnit, clazz, ntAccount);
+        int result = userService.assignDirector(company, businessUnit, clazz, ntAccount);
 
-        if (result == 0) {
+        if (result == 2) {
         return ResponseEntity
             .status(HttpStatus.CONFLICT)
             .body(Map.of("message", "Class already exists in different Business Unit."));

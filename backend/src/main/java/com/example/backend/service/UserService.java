@@ -20,8 +20,12 @@ public class UserService {
         return repository.getCompanies();
     }
 
-    public List<Map<String, Object>> getAllBUs(String company) {
-        return repository.getAllBUs(company);
+    public List<Map<String, Object>> getAllClassesForCompany(String company) {
+        return repository.getAllClassesForCompany(company);
+    }
+
+    public String getBusinessUnitForClass(String company, String clazz) {
+        return repository.getBusinessUnitForClass(company, clazz);
     }
 
     public List<Map<String, Object>> getBUsForClass(String company, String clazz) {
@@ -52,12 +56,8 @@ public class UserService {
         return repository.getNTAccountsByCompany(company);
     }
 
-    // public int addClassForAll(String businessUnit, String clazz) {
-    //     return repository.insertClassForAll(businessUnit, clazz);
-    // }
-
-    public int insertClassWithDirector(String company, String businessUnit, String clazz, String ntAccount) {
-        return repository.insertClassWithDirector(company, businessUnit, clazz, ntAccount);
+    public int assignDirector(String company, String businessUnit, String clazz, String ntAccount) {
+        return repository.assignDirector(company, businessUnit, clazz, ntAccount);
     }
 
     public int deleteClassForCompany(String clazz, String company) {

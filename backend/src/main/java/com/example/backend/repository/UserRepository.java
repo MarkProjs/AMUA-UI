@@ -21,12 +21,23 @@ public class UserRepository {
         """);
     }
 
-    public List<Map<String, Object>> getAllBUs(String company) {
-        return jdbcTemplate.queryForList("""
-        SELECT DISTINCT GroupNTDesc as BusinessUnit FROM CorporateQuote.dbo.Groups WHERE Company = ?;
-        """,company);
+    public List<Map<String, Object>> getAllClassesForCompany(String company) {
+    return jdbcTemplate.queryForList("""
+        SELECT DISTINCT Class FROM CorporateQuote.dbo.BUxClass WHERE Company = ? ORDER BY Class
+    """, company);
     }
 
+    public String getBusinessUnitForClass(String company, String clazz) {
+        List<Map<String, Object>> result = jdbcTemplate.queryForList("""
+            SELECT g.GroupNTDesc 
+            FROM CorporateQuote.dbo.BUxClass b
+            JOIN CorporateQuote.dbo.Groups g ON b.BU = g.GID
+            WHERE b.Class = ? AND b.Company = ?
+        """, clazz, company);
+        
+        return result.isEmpty() ? null : (String) result.get(0).get("GroupNTDesc");
+    }
+    
     public List<Map<String, Object>> getBUsForClass(String company, String clazz) {
         return jdbcTemplate.queryForList("""
             SELECT DISTINCT g.GroupNTDesc
@@ -100,36 +111,7 @@ public class UserRepository {
         return jdbcTemplate.queryForList(sql, String.class, prefix + "%");
     }
 
-    // public int insertClassForAll(String businessUnit, String clazz) {
-    //     String[] companies = {"FUTA", "FUTE", "FUTI"};
-    //     int totalInserted = 0;
-
-    //     for (String company: companies) {
-    //         List<Map<String, Object>> gidList = jdbcTemplate.queryForList("""
-    //                 SELECT GID FROM CorporateQuote.dbo.Groups WHERE Company = ? AND GroupNTDesc = ?;
-    //             """,
-    //         company, businessUnit);
-
-    //         if (!gidList.isEmpty()) {
-    //             int gid = (Integer) gidList.get(0).get("GID");
-
-    //             int inserted = jdbcTemplate.update("""
-    //                         IF NOT EXISTS(
-    //                             SELECT 1 FROM CorporateQuote.dbo.BUxClass
-    //                             WHERE BU = ? AND Class = ? AND Company = ?
-    //                         )
-    //                         BEGIN
-    //                             INSERT INTO CorporateQuote.dbo.BUxClass(BU, Class, Company) VALUES (?, ?, ?)
-    //                         END
-    //                     """, gid, clazz, company, gid, clazz, company);
-
-    //                     totalInserted += inserted;
-    //         }
-    //     }
-    //     return totalInserted;
-    // }
-
-    public int insertClassWithDirector(String company, String businessUnit, String clazz, String ntAccount) {
+    public int assignDirector(String company, String businessUnit, String clazz, String ntAccount) {
         String prefix;
         switch(company) {
             case "FUTA" -> prefix = "ASIA\\";
@@ -143,22 +125,15 @@ public class UserRepository {
             ntAccount = prefix + ntAccount.replaceFirst("^(ASIA|EUR|NA)\\\\", ""); // strip old prefix
         }
 
-        // Check if class exists in BUxClass or AO_UserAssociation
+         // Validate class exists in BUxClass
         boolean existsInBUxClass = Boolean.TRUE.equals(jdbcTemplate.queryForObject("""
             SELECT CASE WHEN EXISTS (
-                SELECT 1 FROM CorporateQuote.dbo.BUxClass WHERE Class = ?
+                SELECT 1 FROM CorporateQuote.dbo.BUxClass WHERE Class = ? AND Company = ?
             ) THEN 1 ELSE 0 END
-        """, Boolean.class, clazz));
+        """, Boolean.class, clazz, company));
 
-        boolean existsInUserAssoc = Boolean.TRUE.equals(jdbcTemplate.queryForObject("""
-            SELECT CASE WHEN EXISTS (
-                SELECT 1 FROM PBOAssetMgmt.dbo.AO_UserAssociation WHERE Class = ?
-            ) THEN 1 ELSE 0 END
-        """, Boolean.class, clazz));
-
-        if (existsInBUxClass || existsInUserAssoc) {
-            // Class already exists in one or both tables — skip insert
-            return 0;
+        if (!existsInBUxClass) {
+            return -1; // class not found
         }
 
         List<Map<String, Object>> gidList = jdbcTemplate.queryForList("""
@@ -167,20 +142,8 @@ public class UserRepository {
 
         if (gidList.isEmpty()) return 0;
 
-        int gid = (Integer) gidList.get(0).get("GID");
-
-        // Insert BUxClass if not exists
-        jdbcTemplate.update("""
-            IF NOT EXISTS (
-                SELECT 1 FROM CorporateQuote.dbo.BUxClass WHERE BU = ? AND Class = ? AND Company = ?
-            )
-            BEGIN
-                INSERT INTO CorporateQuote.dbo.BUxClass (BU, Class, Company)
-                VALUES (?, ?, ?)
-            END
-        """, gid, clazz, company, gid, clazz, company);
-
         // Insert into AO_UserAssociation
+        // Insert into AO_UserAssociation if not exists
         return jdbcTemplate.update("""
             IF NOT EXISTS (
                 SELECT 1 FROM PBOAssetMgmt.dbo.AO_UserAssociation

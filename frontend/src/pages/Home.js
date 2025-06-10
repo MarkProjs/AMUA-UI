@@ -2,12 +2,13 @@ import React, { useEffect, useState } from 'react';
 import {
     fetchCompanies,
     fetchClasses,
+    fetchAllClasses,
     fetchBusinessUnit,
+    fetchBusinessUnitForClass,
     searchWithParams,
     searchAll,
     searchByCompany,
-    fetchAllBUs,
-    addClassForCompany,
+    addDirector,
     getNTAccountsByCompany
 } from '../services/api';
 import DropDownSelector from '../components/DropdownSelector';
@@ -22,15 +23,15 @@ function Home() {
     const [selectedCompany, setSelectedCompany] = useState('');
     const [classes, setClasses] = useState([]);
     const [selectedClass, setSelectedClass] = useState('');
-    const [businessUnits, setBusinessUnits] = useState([]);
-    const [selectedBU, setSelectedBU] = useState('');
     const [results, setResults] = useState([]);
     const [showAddSection, setShowAddSection] = useState(false);
-    const [newClass, setNewClass] = useState('');
-    const [newCompany, setNewCompany] = useState('');
+    
+    // For the add new record form
+    const [addFormCompany, setAddFormCompany] = useState('');
+    const [addFormClasses, setAddFormClasses] = useState([]);
+    const [addFormSelectedClass, setAddFormSelectedClass] = useState('');
     const [ntAccounts, setNtAccounts] = useState([]);
     const [selectedNTAccount, setSelectedNTAccount] = useState('');
-
 
     useEffect(() => {
         async function loadCompanies() {
@@ -40,7 +41,6 @@ function Home() {
 
         loadCompanies();
     }, []);
-
 
     useEffect(() => {
         async function loadClasses() {
@@ -54,68 +54,101 @@ function Home() {
         loadClasses();
     }, [selectedCompany]);
 
+    // Load classes for the add form when company is selected (get ALL classes from BUxClass)
+    useEffect(() => {
+        async function loadAddFormClasses() {
+            if (addFormCompany) {
+                const data = await fetchAllClasses(addFormCompany);
+                setAddFormClasses(data.map(item => item.Class));
+            } else {
+                setAddFormClasses([]);
+            }
+        }
+        loadAddFormClasses();
+    }, [addFormCompany]);
+
     useEffect(() => {
         async function loadNTAccounts() {
-            if (newCompany) {
-                const accounts = await getNTAccountsByCompany(newCompany);
+            if (addFormCompany) {
+                const accounts = await getNTAccountsByCompany(addFormCompany);
                 setNtAccounts(accounts);
             } else {
                 setNtAccounts([]);
             }
         }
         loadNTAccounts();
-}, [newCompany]);
+    }, [addFormCompany]);
 
+async function handleSearch() {
+    try {
+        setHasSearched(true);
 
-
-    async function handleSearch() {
-        try {
-            setHasSearched(true);
-            if (selectedCompany && selectedClass) {
-                const buData = await fetchBusinessUnit(selectedCompany, selectedClass);
-                if (!buData) return setResults([]);
-                const data = await searchWithParams(selectedCompany, selectedClass, buData);
-                setResults(data);
-            } else if (selectedCompany) {
-                const data = await searchByCompany(selectedCompany);
-                setResults(data);
-            } else {
-                const data = await searchAll();
-                setResults(data);
-            }
-        } catch (e) {
-            console.error('Search failed', e);
+        if (selectedCompany && selectedClass) {
+            const buData = await fetchBusinessUnit(selectedCompany, selectedClass);
+            if (!buData) return setResults([]);
+            const data = await searchWithParams(selectedCompany, selectedClass, buData);
+            setResults(data);
+        } else if (selectedCompany) {
+            const data = await searchByCompany(selectedCompany);
+            setResults(data);
+        } else {
+            const data = await searchAll();
+            setResults(data);
         }
+    } catch (e) {
+        console.error('Search failed', e);
+    }
+}
+
+
+async function handleAddDirector() {
+    if (!addFormCompany || !addFormSelectedClass || !selectedNTAccount) {
+        alert('Please fill in all required fields');
+        return;
     }
 
-async function handleAddClass() {
     try {
         setIsSaving(true);
-        const result = await addClassForCompany(newCompany, newClass, selectedBU, selectedNTAccount);
 
-        if (!result.success) {
-            alert(result.message);  
+        // Get the business unit for the selected class
+        const businessUnit = await fetchBusinessUnitForClass(addFormCompany, addFormSelectedClass);
+        if (!businessUnit) {
+            alert('Could not find business unit for the selected class. Please ensure the class exists in BUxClass table.');
             return;
         }
 
-        const classData = await fetchClasses(newCompany);
-        setClasses(classData.map(item => item.Class));
-        setSelectedClass(newClass);
-        setSelectedCompany(newCompany);
-        setShowAddSection(false);
-        setSelectedBU('');
-        setNewClass('');
-        setNewCompany('');
+        const result = await addDirector(addFormCompany, addFormSelectedClass, businessUnit, selectedNTAccount);
+
+        if (!result.success) {
+            alert(result.message);
+            return;
+        }
+
+        // Reset the add form fields
+        setAddFormCompany('');
+        setAddFormSelectedClass('');
         setSelectedNTAccount('');
-        await handleSearch();
+        setShowAddSection(false);
+
+        // ✅ Refresh the Class Code dropdown in the Search section
+        if (addFormCompany) {
+            const updatedClasses = await fetchClasses(addFormCompany);
+            setClasses(updatedClasses.map(item => item.Class));
+        }
+
+        // Optionally refresh the search results if search was already triggered
+        if (hasSearched) {
+            await handleSearch();
+        }
+
+        alert('Director assigned successfully!');
     } catch (e) {
-        console.error('Failed to add class', e);
-        alert('Failed to add class. Please try again.');
+        console.error('Failed to assign director', e);
+        alert('Failed to assign director. Please try again.');
     } finally {
         setIsSaving(false);
     }
 }
-
 
 
     return (
@@ -144,23 +177,17 @@ async function handleAddClass() {
             <div className="action-bar">
                 <button
                     className="btn btn-success me-2"
-                    onClick={async ()=>{
+                    onClick={() => {
                         const newState = !showAddSection;
                         setShowAddSection(newState);
 
                         if (newState) {
                             setResults([]); 
                             setHasSearched(false); 
-                        }
-                        
-                        if (newState && businessUnits.length === 0) {
-                            try {
-                                const data = await fetchAllBUs();
-                                const uniqueBU = [...new Set(data.map(item => item.BusinessUnit))];
-                                setBusinessUnits(uniqueBU);
-                            } catch (e) {
-                                console.error('Failed to fetch all BUs', e);
-                            }
+                            // Reset add form when opening
+                            setAddFormCompany('');
+                            setAddFormSelectedClass('');
+                            setSelectedNTAccount('');
                         }
                     }}
                 >
@@ -177,43 +204,32 @@ async function handleAddClass() {
                         transition={{ duration: 0.3 }}
                         className="add-form card mb-3 p-3"
                     >
+                        <h5 className="mb-3">Assign New Director to Existing Class</h5>
                         <div className="d-flex flex-wrap align-items-end">
                             <div className="form-group me-4">
                                 <DropDownSelector
                                     label="Company"
-                                    value={newCompany}
+                                    value={addFormCompany}
                                     options={companies}
-                                    onChange={(e) => setNewCompany(e.target.value)}
+                                    onChange={(e) => setAddFormCompany(e.target.value)}
                                     placeholder="Select company"
                                 />
                             </div>
 
                             <div className="form-group me-4">
                                 <DropDownSelector
-                                    label="Business Unit"
-                                    value={selectedBU}
-                                    options={businessUnits}
-                                    onChange={(e) => setSelectedBU(e.target.value)}
-                                    placeholder="Select BU"
+                                    label="Existing Class"
+                                    value={addFormSelectedClass}
+                                    options={addFormClasses}
+                                    onChange={(e) => setAddFormSelectedClass(e.target.value)}
+                                    placeholder="Select existing class"
                                     isSearchable={true}
                                 />
                             </div>
 
                             <div className="form-group me-4">
-                                <label htmlFor="newClass" className="form-label">New Class</label>
-                                <input
-                                    id="newClass"
-                                    type="text"
-                                    className="form-control"
-                                    value={newClass}
-                                    onChange={(e) => setNewClass(e.target.value)}
-                                    placeholder="Enter new class code"
-                                />
-                            </div>
-
-                            <div className="form-group me-4">
                                 <DropDownSelector
-                                    label="Director NT Account"
+                                    label="New Director NT Account"
                                     value={selectedNTAccount}
                                     options={ntAccounts}
                                     onChange={(e) => setSelectedNTAccount(e.target.value)}
@@ -225,10 +241,10 @@ async function handleAddClass() {
                             <div className="form-group">
                                 <button
                                     className="btn btn-primary"
-                                    onClick={handleAddClass}
-                                    disabled={!newCompany || !selectedBU || !newClass || !selectedNTAccount || isSaving}
+                                    onClick={handleAddDirector}
+                                    disabled={!addFormCompany || !addFormSelectedClass || !selectedNTAccount || isSaving}
                                 >
-                                    {isSaving ? 'Saving...' : 'Save'}
+                                    {isSaving ? 'Assigning...' : 'Assign Director'}
                                 </button>
                             </div>
                         </div>
