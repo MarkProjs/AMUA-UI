@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import Select from 'react-select';
+import DropDownSelector from './DropdownSelector';
 import {
     updateNTAccount,
     getNTAccountsByCompany,
@@ -98,28 +98,23 @@ function SearchTable({ data, onUpdateComplete, addingMode,hasSearched }) {
                             <td>{row.Role}</td>
                             <td style={{ minWidth: '200px' }}>
                                 {editRowIndex === idx ? (
-                                    <Select
-                                        value={
-                                            ntDropdownOptions.find(opt => opt.value === ntValue) || null
-                                        }
-                                        onChange={(selectedOption) =>
-                                            setNtValue(selectedOption?.value || '')
-                                        }
+                                    <DropDownSelector
+                                        label=""
+                                        value={ntValue}
                                         options={ntDropdownOptions}
-                                        isClearable
-                                        isSearchable
+                                        onChange={(e) => setNtValue(e.target.value)}
                                         placeholder="Select NT Account"
+                                        isSearchable={true}
                                     />
-
                                 ) : (
                                     row.NT_Account
                                 )}
                             </td>
                             <td>
                                 {editRowIndex === idx ? (
-                                    <>
+                                    <span style={{ display: 'inline-flex', gap: '8px' }}>
                                         <button
-                                            className="btn btn-sm btn-success me-2"
+                                            className="btn btn-sm btn-success me-3"
                                             onClick={() => handleSaveClick(row)}
                                         >
                                             Save
@@ -130,11 +125,11 @@ function SearchTable({ data, onUpdateComplete, addingMode,hasSearched }) {
                                         >
                                             Cancel
                                         </button>
-                                    </>
+                                    </span>
                                 ) : (
-                                    <>
+                                    <span style={{ display: 'inline-flex', gap: '8px' }}>
                                         <button
-                                            className="btn btn-sm btn-primary me-2"
+                                            className="btn btn-sm btn-primary me-3"
                                             onClick={() => handleUpdateClick(idx)}
                                         >
                                             Update
@@ -145,7 +140,7 @@ function SearchTable({ data, onUpdateComplete, addingMode,hasSearched }) {
                                         >
                                             Delete
                                         </button>
-                                    </>
+                                    </span>
                                 )}
                             </td>
                         </tr>

@@ -203,7 +203,7 @@ async function handleAddDirector() {
                         transition={{ duration: 0.3 }}
                         className="add-form card mb-3 p-3"
                     >
-                        <h5 className="mb-3">Assign New Director to Existing Class</h5>
+                        <h5 className="mb-3">Assign New Director</h5>
                         <div className="d-flex flex-wrap align-items-end">
                             <div className="form-group me-4">
                                 <DropDownSelector

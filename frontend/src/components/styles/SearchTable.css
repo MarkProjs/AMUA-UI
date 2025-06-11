@@ -22,9 +22,6 @@
     white-space: nowrap;
 }
 
-.custom-table td .react-select__control {
-    min-width: 250px;
-}
 
 .custom-table thead th {
     background-color: #343a40;
