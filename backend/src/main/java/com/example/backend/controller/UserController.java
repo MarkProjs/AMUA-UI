@@ -97,21 +97,29 @@ public class UserController {
 
 
     @PostMapping("/add-director")
-    public ResponseEntity<Map<String, Object>> addDirector(@RequestBody Map<String, String> payload) {
-        String company = payload.get("company");
-        String businessUnit = payload.get("businessUnit");
-        String clazz = payload.get("clazz");
-        String ntAccount = payload.get("ntAccount");
+    public ResponseEntity<Map<String, Object>> addDirector(@RequestBody Map<String, String> p) {
 
-        int result = userService.assignDirector(company, businessUnit, clazz, ntAccount);
+        int code = userService.assignDirector(
+                    p.get("company"),
+                    p.get("businessUnit"),
+                    p.get("clazz"),
+                    p.get("ntAccount"));
 
-        if (result == 2) {
-        return ResponseEntity
-            .status(HttpStatus.CONFLICT)
-            .body(Map.of("message", "Class already exists in different Business Unit."));
-        }
-        return ResponseEntity.ok(Map.of("rowsInserted", result));
+        return switch (code) {
+            case  1 -> ResponseEntity.ok(Map.of("rowsInserted", 1));
+            case  0 -> ResponseEntity.status(HttpStatus.NOT_FOUND)
+                                    .body(Map.of("message", "Business Unit not found."));
+            case -1 -> ResponseEntity.status(HttpStatus.NOT_FOUND)
+                                    .body(Map.of("message", "Class not found."));
+            case  2 -> ResponseEntity.status(HttpStatus.CONFLICT)
+                                    .body(Map.of("message", "Class already associated to a different Business Unit."));
+            case  3 -> ResponseEntity.status(HttpStatus.CONFLICT)
+                                    .body(Map.of("message", "A director already exists for this Class ."));
+            default -> ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                                    .body(Map.of("message", "Unhandled result code: " + code));
+        };
     }
+
 
     @DeleteMapping("/delete/bu")
     public Map<String, Object> deleteClassForCompany(@RequestParam String clazz, 

@@ -136,7 +136,6 @@ async function handleAddDirector() {
             setClasses(updatedClasses.map(item => item.Class));
         }
 
-        // Optionally refresh the search results if search was already triggered
         if (hasSearched) {
             await handleSearch();
         }
@@ -191,7 +190,7 @@ async function handleAddDirector() {
                         }
                     }}
                 >
-                    {showAddSection ? '- Cancel': '+ Add new record'}
+                    {showAddSection ? '- Cancel': '+ Assign a Director'}
                 </button>
             </div>
             <AnimatePresence>

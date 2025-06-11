@@ -117,50 +117,69 @@ public class UserRepository {
 
 
 
-    public int assignDirector(String company, String businessUnit, String clazz, String ntAccount) {
-        String prefix;
-        switch(company) {
-            case "FUTA" -> prefix = "ASIA\\";
-            case "FUTE" -> prefix = "EUR\\";
-            case "FUTI" -> prefix = "NA\\";
-            default -> throw new IllegalArgumentException("Unknown company: " + company);
-        }
+    public int assignDirector(String company,
+                            String businessUnit,
+                            String clazz,
+                            String ntAccount) {
 
-        // Ensure the NT_Account includes the correct prefix
+        // -------- 1. prefix handling ----------
+        String prefix = switch (company) {
+            case "FUTA" -> "ASIA\\";
+            case "FUTE" -> "EUR\\";
+            case "FUTI" -> "NA\\";
+            default     -> throw new IllegalArgumentException("Unknown company: " + company);
+        };
         if (!ntAccount.startsWith(prefix)) {
-            ntAccount = prefix + ntAccount.replaceFirst("^(ASIA|EUR|NA)\\\\", ""); // strip old prefix
+            ntAccount = prefix + ntAccount.replaceFirst("^(ASIA|EUR|NA)\\\\", "");
         }
 
-         // Validate class exists in BUxClass
-        boolean existsInBUxClass = Boolean.TRUE.equals(jdbcTemplate.queryForObject("""
+        // -------- 2. class must exist ----------
+        boolean classExists = Boolean.TRUE.equals(jdbcTemplate.queryForObject("""
             SELECT CASE WHEN EXISTS (
-                SELECT 1 FROM CorporateQuote.dbo.BUxClass WHERE Class = ? AND Company = ?
+                SELECT 1 FROM CorporateQuote.dbo.BUxClass
+                WHERE Company = ? AND Class = ?
             ) THEN 1 ELSE 0 END
-        """, Boolean.class, clazz, company));
+        """, Boolean.class, company, clazz));
+        if (!classExists) return -1;      // class missing in BUxClass
 
-        if (!existsInBUxClass) {
-            return -1; // class not found
-        }
+        // -------- 3. BU must map to a GID ----------
+        Integer gid = jdbcTemplate.queryForObject("""
+            SELECT GID FROM CorporateQuote.dbo.Groups
+            WHERE Company = ? AND GroupNTDesc = ?
+        """, Integer.class, company, businessUnit);
+        if (gid == null) return 0;        // BU description not found
 
-        List<Map<String, Object>> gidList = jdbcTemplate.queryForList("""
-                SELECT GID FROM CorporateQuote.dbo.Groups WHERE Company = ? AND GroupNTDesc = ?;
-                """, company, businessUnit);
+        // -------- 4. *NEW* : any director already on this Class+BU ? ----------
+        boolean directorExists = Boolean.TRUE.equals(jdbcTemplate.queryForObject("""
+            SELECT CASE WHEN EXISTS (
+                SELECT 1 FROM PBOAssetMgmt.dbo.AO_UserAssociation
+                WHERE Company = ? AND Class = ? AND BU = ? AND Role = 'director'
+            ) THEN 1 ELSE 0 END
+        """, Boolean.class, company, clazz, businessUnit));
+        if (directorExists) return 3;     // << we’ll treat 3 as “duplicate director”
 
-        if (gidList.isEmpty()) return 0;
+        // -------- 5. same-class-different-BU conflict ----------
+        boolean diffBuConflict = Boolean.TRUE.equals(jdbcTemplate.queryForObject("""
+            SELECT CASE WHEN EXISTS (
+                SELECT 1 FROM PBOAssetMgmt.dbo.AO_UserAssociation
+                WHERE Company = ? AND Class = ? AND BU <> ? AND Role = 'director'
+            ) THEN 1 ELSE 0 END
+        """, Boolean.class, company, clazz, businessUnit));
+        if (diffBuConflict) return 2;     // original “class exists in a different BU”
 
-        // Insert into AO_UserAssociation
-        // Insert into AO_UserAssociation if not exists
+        // -------- 6. insert if the exact row is new ----------
         return jdbcTemplate.update("""
             IF NOT EXISTS (
                 SELECT 1 FROM PBOAssetMgmt.dbo.AO_UserAssociation
                 WHERE Company = ? AND Class = ? AND NT_Account = ? AND BU = ? AND Role = 'director'
             )
-            BEGIN
-                INSERT INTO PBOAssetMgmt.dbo.AO_UserAssociation (Company, Class, NT_Account, BU, Role)
-                VALUES (?, ?, ?, ?, 'director')
-            END
-        """, company, clazz, ntAccount, businessUnit, company, clazz, ntAccount, businessUnit);
+            INSERT INTO PBOAssetMgmt.dbo.AO_UserAssociation
+                (Company, Class, NT_Account, BU, Role)
+            VALUES (?, ?, ?, ?, 'director')
+        """, company, clazz, ntAccount, businessUnit,   // IF
+            company, clazz, ntAccount, businessUnit);  // INSERT
     }
+
 
     public int deleteClassByCompany(String clazz, String company){
         String sql = "DELETE FROM CorporateQuote.dbo.BUxClass WHERE Class = ? AND Company = ?";

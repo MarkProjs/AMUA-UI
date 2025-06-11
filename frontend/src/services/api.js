@@ -83,19 +83,17 @@ export async function getNTAccountsByCompany(company) {
 export async function addDirector(company, clazz, businessUnit, ntAccount) {
     try {
         const res = await axios.post(`${API_BASE_URL}/add-director`, {
-            company,
-            clazz,
-            businessUnit,
-            ntAccount
+        company, clazz, businessUnit, ntAccount
         });
         return { success: true, data: res.data };
     } catch (err) {
         if (err.response && err.response.status === 409) {
-            return { success: false, message: err.response.data.message };
+        return { success: false, message: err.response.data.message }; // now shows duplicate msg
         }
-        return { success: false, message: 'Unexpected error occurred while adding class.' };
+        return { success: false, message: 'Unexpected error occurred while adding director.' };
     }
 }
+
 
 
 export async function deleteClassFromBu(clazz, company) {
