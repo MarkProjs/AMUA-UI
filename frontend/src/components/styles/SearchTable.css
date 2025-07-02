@@ -1,8 +1,13 @@
 .table-wrapper {
-    height: 504px; 
+    height: calc(100vh - 173px);
     overflow-y: auto;
-    overflow-x: auto; 
-    border: 1px solid #ddd; 
+    overflow-x: auto;
+    margin: 0;
+    padding: 0;
+    border: none;
+    position: relative;
+    flex-grow: 1;
+    padding-bottom: 20px;
 }
 
 .custom-table {
@@ -24,6 +29,9 @@
 
 
 .custom-table thead th {
+    position: sticky;
+    top: 0;
     background-color: #343a40;
     color: #fff;
+    z-index: 2;
 }

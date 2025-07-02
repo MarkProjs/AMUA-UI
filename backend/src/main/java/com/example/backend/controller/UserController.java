@@ -21,7 +21,7 @@ import com.example.backend.service.UserService;
 
 
 @RestController
-@RequestMapping("api/users")
+@RequestMapping("/api/users")
 public class UserController {
     
     private final UserService userService;
@@ -34,6 +34,12 @@ public class UserController {
     public List<Map<String, Object>> getCompanies() {
         return userService.getCompanies();
     }
+
+    @GetMapping("/test")
+    public String test() {
+        return "Controller is working";
+    }
+    
 
     @GetMapping("/bu/class")
     public List<Map<String, Object>> getBUsForClass(@RequestParam String company,

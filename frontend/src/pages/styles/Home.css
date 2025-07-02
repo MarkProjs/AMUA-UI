@@ -1,15 +1,11 @@
 .page-wrapper {
     font-family: Arial, sans-serif;
-    background-color: #f8f9fa;
+    background-color: #bcbcc0;
     padding: 0;
-}
-
-.header-bar {
-    background-color: #003300;
-    color: white;
-    padding: 10px 20px;
-    font-size: 18px;
-    font-weight: bold;
+    margin: 0;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
 }
 
 .filter-bar {
@@ -45,7 +41,6 @@
 .add-form select,
 .add-form input {
     border-radius: 8px;
-    padding: 10px;
     border: 1px solid #ccc;
     font-size: 14px;
 }
@@ -73,9 +68,3 @@
     min-height: 40px;
     font-size: 14px;
 }
-
-.react-select__menu {
-    z-index: 9999;
-}
-
-

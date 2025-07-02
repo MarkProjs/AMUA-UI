@@ -79,80 +79,78 @@ function Home() {
         loadNTAccounts();
     }, [addFormCompany]);
 
-async function handleSearch() {
-    try {
-        setHasSearched(true);
+    async function handleSearch() {
+        try {
+            setHasSearched(true);
 
-        if (selectedCompany && selectedClass) {
-            const buData = await fetchBusinessUnit(selectedCompany, selectedClass);
-            if (!buData) return setResults([]);
-            const data = await searchWithParams(selectedCompany, selectedClass, buData);
-            setResults(data);
-        } else if (selectedCompany) {
-            const data = await searchByCompany(selectedCompany);
-            setResults(data);
-        } else {
-            const data = await searchAll();
-            setResults(data);
+            if (selectedCompany && selectedClass) {
+                const buData = await fetchBusinessUnit(selectedCompany, selectedClass);
+                if (!buData) return setResults([]);
+                const data = await searchWithParams(selectedCompany, selectedClass, buData);
+                setResults(data);
+            } else if (selectedCompany) {
+                const data = await searchByCompany(selectedCompany);
+                setResults(data);
+            } else {
+                const data = await searchAll();
+                setResults(data);
+            }
+        } catch (e) {
+            console.error('Search failed', e);
         }
-    } catch (e) {
-        console.error('Search failed', e);
-    }
-}
-
-
-async function handleAddDirector() {
-    if (!addFormCompany || !addFormSelectedClass || !selectedNTAccount) {
-        alert('Please fill in all required fields');
-        return;
     }
 
-    try {
-        setIsSaving(true);
 
-        // Get the business unit for the selected class
-        const businessUnit = await fetchBusinessUnitForClass(addFormCompany, addFormSelectedClass);
-        if (!businessUnit) {
-            alert('Could not find business unit for the selected class. Please ensure the class exists in BUxClass table.');
+    async function handleAddDirector() {
+        if (!addFormCompany || !addFormSelectedClass || !selectedNTAccount) {
+            alert('Please fill in all required fields');
             return;
         }
 
-        const result = await addDirector(addFormCompany, addFormSelectedClass, businessUnit, selectedNTAccount);
+        try {
+            setIsSaving(true);
 
-        if (!result.success) {
-            alert(result.message);
-            return;
+            // Get the business unit for the selected class
+            const businessUnit = await fetchBusinessUnitForClass(addFormCompany, addFormSelectedClass);
+            if (!businessUnit) {
+                alert('Could not find business unit for the selected class. Please ensure the class exists in BUxClass table.');
+                return;
+            }
+
+            const result = await addDirector(addFormCompany, addFormSelectedClass, businessUnit, selectedNTAccount);
+
+            if (!result.success) {
+                alert(result.message);
+                return;
+            }
+
+            // Reset the add form fields
+            setAddFormCompany('');
+            setAddFormSelectedClass('');
+            setSelectedNTAccount('');
+            setShowAddSection(false);
+
+            // ✅ Refresh the Class Code dropdown in the Search section
+            if (addFormCompany) {
+                const updatedClasses = await fetchClasses(addFormCompany);
+                setClasses(updatedClasses.map(item => item.Class));
+            }
+
+            if (hasSearched) {
+                await handleSearch();
+            }
+
+            alert('Director assigned successfully!');
+        } catch (e) {
+            console.error('Failed to assign director', e);
+            alert('Failed to assign director. Please try again.');
+        } finally {
+            setIsSaving(false);
         }
-
-        // Reset the add form fields
-        setAddFormCompany('');
-        setAddFormSelectedClass('');
-        setSelectedNTAccount('');
-        setShowAddSection(false);
-
-        // ✅ Refresh the Class Code dropdown in the Search section
-        if (addFormCompany) {
-            const updatedClasses = await fetchClasses(addFormCompany);
-            setClasses(updatedClasses.map(item => item.Class));
-        }
-
-        if (hasSearched) {
-            await handleSearch();
-        }
-
-        alert('Director assigned successfully!');
-    } catch (e) {
-        console.error('Failed to assign director', e);
-        alert('Failed to assign director. Please try again.');
-    } finally {
-        setIsSaving(false);
     }
-}
-
 
     return (
         <div className="page-wrapper">
-            <div className="header-bar">Director Role Maintenance</div>
             <div className="filter-bar">
                 <DropDownSelector
                     label="Company Code"
@@ -252,7 +250,7 @@ async function handleAddDirector() {
             </AnimatePresence>
             <SearchTable 
                         data={results} 
-                        onUpdateComplete={handleSearch} 
+                        onUpdateComplete={handleSearch}
                         addingMode={showAddSection}
                         hasSearched={hasSearched}
             />

@@ -6,7 +6,7 @@ function DropDownSelector({ label, value, options, onChange, placeholder, isSear
         typeof opt === 'string' ? {value: opt, label: opt} : opt
     );
     return(
-        <div className='dropdown-selector' style={{minWidth: '220px'}}>
+        <div className='dropdown-selector' style={{minWidth: '170px'}}>
             <label className='form-label fw-bold'>{label}</label>
             <Select
                 options = {formattedOptions}
@@ -15,6 +15,11 @@ function DropDownSelector({ label, value, options, onChange, placeholder, isSear
                 placeholder={placeholder}
                 isSearchable={isSearchable}
                 classNamePrefix="react-select"
+                menuPortalTarget={document.body}
+                menuPosition="fixed"
+                styles={{
+                    menuPortal: (base) => ({ ...base, zIndex: 9999 }),
+                }}
             />
         </div>
     );

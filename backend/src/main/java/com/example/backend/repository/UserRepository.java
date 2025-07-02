@@ -143,6 +143,12 @@ public class UserRepository {
         if (!classExists) return -1;      // class missing in BUxClass
 
         // -------- 3. BU must map to a GID ----------
+        // Integer gid = jdbcTemplate.queryForObject("""
+        //     SELECT GID FROM CorporateQuote.dbo.Groups
+        //     WHERE Company = ? AND GroupNTDesc = ?
+        // """, Integer.class, company, businessUnit);
+        // if (gid == null) return 0;        // BU description not found
+
         boolean gidExists = Boolean.TRUE.equals(jdbcTemplate.queryForObject("""
             SELECT CASE WHEN EXISTS (
                 SELECT 1
@@ -152,6 +158,7 @@ public class UserRepository {
         """, Boolean.class, company, businessUnit));
 
         if (!gidExists) return 0; // BU description not found
+
 
         // -------- 4. *NEW* : any director already on this Class+BU ? ----------
         boolean directorExists = Boolean.TRUE.equals(jdbcTemplate.queryForObject("""
